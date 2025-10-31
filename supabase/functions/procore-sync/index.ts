@@ -22,8 +22,10 @@ serve(async (req) => {
       }
     );
 
-    // Get current user
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    // Extract JWT from Authorization header and resolve user
+    const authHeader = req.headers.get('Authorization');
+    const jwt = authHeader?.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(jwt);
     if (userError || !user) {
       throw new Error('Unauthorized');
     }
