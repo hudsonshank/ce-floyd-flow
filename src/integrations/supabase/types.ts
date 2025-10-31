@@ -61,15 +61,39 @@ export type Database = {
           },
         ]
       }
+      oauth_tokens: {
+        Row: {
+          created_at: string
+          id: string
+          procore_access_token: string | null
+          procore_refresh_token: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          procore_access_token?: string | null
+          procore_refresh_token?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          procore_access_token?: string | null
+          procore_refresh_token?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
           default_filters: Json | null
           email: string
           id: string
-          procore_access_token: string | null
-          procore_refresh_token: string | null
-          role: Database["public"]["Enums"]["app_role"]
           updated_at: string
           user_id: string
         }
@@ -78,9 +102,6 @@ export type Database = {
           default_filters?: Json | null
           email: string
           id?: string
-          procore_access_token?: string | null
-          procore_refresh_token?: string | null
-          role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
           user_id: string
         }
@@ -89,9 +110,6 @@ export type Database = {
           default_filters?: Json | null
           email?: string
           id?: string
-          procore_access_token?: string | null
-          procore_refresh_token?: string | null
-          role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
           user_id?: string
         }
@@ -275,6 +293,27 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       validation_flags: {
         Row: {
           attachment_id: string
@@ -315,7 +354,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "pm" | "admin" | "exec"
