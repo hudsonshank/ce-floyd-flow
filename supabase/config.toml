@@ -1,1 +1,10 @@
 project_id = "hdrkajhfpqkvnhuuoozr"
+
+[functions.procore-auth]
+verify_jwt = false
+
+[functions.procore-callback]
+verify_jwt = false
+
+[functions.procore-sync]
+verify_jwt = true

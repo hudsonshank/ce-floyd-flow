@@ -3,16 +3,77 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { RefreshCw, Link as LinkIcon, Mail } from "lucide-react";
+import { RefreshCw, Link as LinkIcon, Mail, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 
 export default function Settings() {
-  const handleConnectProcore = () => {
-    toast.info("Procore OAuth integration pending");
+  const [isConnected, setIsConnected] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  useEffect(() => {
+    checkProcoreConnection();
+    
+    // Check for OAuth callback status
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('procore') === 'connected') {
+      toast.success("Successfully connected to Procore!");
+      setIsConnected(true);
+      window.history.replaceState({}, '', '/settings');
+    } else if (params.get('procore') === 'error') {
+      toast.error("Failed to connect to Procore");
+      window.history.replaceState({}, '', '/settings');
+    }
+  }, []);
+
+  const checkProcoreConnection = async () => {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('procore_access_token')
+        .single();
+      
+      setIsConnected(!!profile?.procore_access_token);
+    } catch (error) {
+      console.error('Error checking Procore connection:', error);
+    }
   };
 
-  const handleRunSync = () => {
-    toast.info("Sync feature will be activated after Procore connection");
+  const handleConnectProcore = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('procore-auth');
+      
+      if (error) throw error;
+      
+      if (data?.authUrl) {
+        window.location.href = data.authUrl;
+      }
+    } catch (error: any) {
+      console.error('Error initiating Procore OAuth:', error);
+      toast.error(error.message || "Failed to connect to Procore");
+    }
+  };
+
+  const handleRunSync = async () => {
+    if (!isConnected) {
+      toast.error("Please connect to Procore first");
+      return;
+    }
+
+    setIsSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('procore-sync');
+      
+      if (error) throw error;
+      
+      toast.success(`Sync completed! ${data.projectsCount} projects and ${data.commitmentsCount} commitments synced`);
+    } catch (error: any) {
+      console.error('Error syncing from Procore:', error);
+      toast.error(error.message || "Failed to sync from Procore");
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   return (
@@ -31,12 +92,23 @@ export default function Settings() {
           <div className="flex items-center justify-between p-4 border rounded-lg">
             <div className="space-y-1">
               <p className="font-medium">Connection Status</p>
-              <p className="text-sm text-muted-foreground">Not Connected</p>
+              <div className="flex items-center gap-2">
+                {isConnected ? (
+                  <>
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <p className="text-sm text-muted-foreground">Connected</p>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Not Connected</p>
+                )}
+              </div>
             </div>
-            <Button onClick={handleConnectProcore}>
-              <LinkIcon className="h-4 w-4 mr-2" />
-              Connect to Procore
-            </Button>
+            {!isConnected && (
+              <Button onClick={handleConnectProcore}>
+                <LinkIcon className="h-4 w-4 mr-2" />
+                Connect to Procore
+              </Button>
+            )}
           </div>
 
           <Separator />
@@ -50,9 +122,14 @@ export default function Settings() {
               </p>
             </div>
 
-            <Button onClick={handleRunSync} variant="outline" className="w-full">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Run Procore Sync Now
+            <Button 
+              onClick={handleRunSync} 
+              variant="outline" 
+              className="w-full"
+              disabled={!isConnected || isSyncing}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+              {isSyncing ? 'Syncing...' : 'Run Procore Sync Now'}
             </Button>
           </div>
         </CardContent>
