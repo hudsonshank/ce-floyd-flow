@@ -77,6 +77,11 @@ serve(async (req) => {
 
     const projects = await projectsResponse.json();
     console.log(`Fetched ${projects.length} projects from Procore`);
+    
+    // Log sample project data to see what's available
+    if (projects.length > 0) {
+      console.log('Sample project data:', JSON.stringify(projects[0], null, 2));
+    }
 
     // Sync projects to database using admin client
     for (const project of projects) {
@@ -120,6 +125,11 @@ serve(async (req) => {
 
         const commitments = await commitmentsResponse.json();
         totalCommitments += commitments.length;
+        
+        // Log sample commitment data to see what's available
+        if (commitments.length > 0 && totalCommitments === commitments.length) {
+          console.log('Sample commitment data:', JSON.stringify(commitments[0], null, 2));
+        }
 
         // Get the internal project ID
         const { data: dbProject } = await adminClient
