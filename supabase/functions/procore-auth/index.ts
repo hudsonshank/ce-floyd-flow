@@ -31,7 +31,8 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error('Error in procore-auth:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    const message = error instanceof Error ? error.message : 'An unknown error occurred';
+    return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

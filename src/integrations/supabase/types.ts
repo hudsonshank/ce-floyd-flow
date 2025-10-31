@@ -67,6 +67,8 @@ export type Database = {
           default_filters: Json | null
           email: string
           id: string
+          procore_access_token: string | null
+          procore_refresh_token: string | null
           role: Database["public"]["Enums"]["app_role"]
           updated_at: string
           user_id: string
@@ -76,6 +78,8 @@ export type Database = {
           default_filters?: Json | null
           email: string
           id?: string
+          procore_access_token?: string | null
+          procore_refresh_token?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
           user_id: string
@@ -85,6 +89,8 @@ export type Database = {
           default_filters?: Json | null
           email?: string
           id?: string
+          procore_access_token?: string | null
+          procore_refresh_token?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
           user_id?: string
