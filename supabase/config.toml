@@ -1,7 +1,7 @@
 project_id = "hdrkajhfpqkvnhuuoozr"
 
 [functions.procore-auth]
-verify_jwt = false
+verify_jwt = true
 
 [functions.procore-callback]
 verify_jwt = false
