@@ -181,6 +181,13 @@ serve(async (req) => {
             }
           }
 
+          // Try multiple possible field names for contract value
+          const contractValue = commitment.grand_total 
+            || commitment.revised_contract 
+            || commitment.contract_amount 
+            || commitment.commitment_contract_amount
+            || null;
+
           const { error: upsertError } = await adminClient
             .from('subcontracts')
             .upsert({
@@ -190,7 +197,7 @@ serve(async (req) => {
               subcontractor_email: vendorEmail,
               title: commitment.title,
               number: commitment.number,
-              contract_value: commitment.grand_total,
+              contract_value: contractValue,
               contract_date: commitment.executed_date,
               status: commitment.status === 'Approved' ? 'Approved' : 'Draft',
               executed: commitment.executed || false,
