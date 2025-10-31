@@ -13,9 +13,26 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useEffect, useState } from "react";
 
 export function AppHeader() {
   const navigate = useNavigate();
+  const [lastSync, setLastSync] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchLastSync = async () => {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('last_sync_at')
+        .order('last_sync_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!error && data?.last_sync_at) {
+        setLastSync(new Date(data.last_sync_at).toLocaleString());
+      }
+    };
+    fetchLastSync();
+  }, []);
 
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
@@ -43,7 +60,7 @@ export function AppHeader() {
         <div className="ml-auto flex items-center gap-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <RefreshCw className="h-4 w-4" />
-            <span className="hidden sm:inline">Last Sync: Never</span>
+            <span className="hidden sm:inline">Last Sync: {lastSync ?? 'Never'}</span>
           </div>
           
           <DropdownMenu>
