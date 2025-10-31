@@ -14,9 +14,29 @@ serve(async (req) => {
   try {
     const url = new URL(req.url);
     const code = url.searchParams.get('code');
+    const state = url.searchParams.get('state');
     
     if (!code) {
       throw new Error('No authorization code provided');
+    }
+    if (!state) {
+      throw new Error('No state parameter provided');
+    }
+
+    // Decode state to get user and redirect info
+    let userId: string;
+    let redirectAfter = '/settings';
+    try {
+      const s = JSON.parse(atob(state));
+      userId = s.userId;
+      redirectAfter = s.redirect || redirectAfter;
+      const age = Date.now() - (s.ts ?? 0);
+      if (age > 10 * 60 * 1000) {
+        console.warn('State parameter appears old:', age);
+      }
+    } catch (e) {
+      console.error('Failed to decode state:', e);
+      throw new Error('Invalid state parameter');
     }
 
     const clientId = Deno.env.get('PROCORE_CLIENT_ID');
@@ -53,17 +73,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('No authorization header');
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user } } = await supabaseClient.auth.getUser(token);
-
-    if (!user) {
-      throw new Error('User not found');
-    }
+    // Using userId from state parameter - no auth header required
 
     // Store token in profiles table
     const { error: updateError } = await supabaseClient
@@ -72,28 +82,43 @@ serve(async (req) => {
         procore_access_token: tokenData.access_token,
         procore_refresh_token: tokenData.refresh_token,
       })
-      .eq('user_id', user.id);
+      .eq('user_id', userId);
 
     if (updateError) {
       console.error('Failed to store token:', updateError);
       throw new Error('Failed to store access token');
     }
 
-    // Redirect back to settings page
+    // Redirect back to app
+    const successUrl = redirectAfter.includes('?')
+      ? `${redirectAfter}&procore=connected`
+      : `${redirectAfter}?procore=connected`;
     return new Response(null, {
       status: 302,
       headers: {
         ...corsHeaders,
-        'Location': '/settings?procore=connected',
+        'Location': successUrl,
       },
     });
   } catch (error) {
     console.error('Error in procore-callback:', error);
+    let errorRedirect = '/settings?procore=error';
+    try {
+      const url = new URL(req.url);
+      const state = url.searchParams.get('state');
+      if (state) {
+        const s = JSON.parse(atob(state));
+        const base = s.redirect || '/settings';
+        errorRedirect = base.includes('?') ? `${base}&procore=error` : `${base}?procore=error`;
+      }
+    } catch (_) {
+      // ignore
+    }
     return new Response(null, {
       status: 302,
       headers: {
         ...corsHeaders,
-        'Location': '/settings?procore=error',
+        'Location': errorRedirect,
       },
     });
   }
