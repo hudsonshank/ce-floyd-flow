@@ -56,19 +56,19 @@ export default function Tracker() {
         <CardContent>
           <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-4">
             <div className="flex items-center gap-2">
-              <StatusBadge status="Complete" />
+              <StatusBadge status="Complete" type="attachment" />
               <span className="text-sm">Document received & verified</span>
             </div>
             <div className="flex items-center gap-2">
-              <StatusBadge status="Pending Review" />
+              <StatusBadge status="Pending Review" type="attachment" />
               <span className="text-sm">Needs validation</span>
             </div>
             <div className="flex items-center gap-2">
-              <StatusBadge status="Missing" />
+              <StatusBadge status="Missing" type="attachment" />
               <span className="text-sm">Not yet received</span>
             </div>
             <div className="flex items-center gap-2">
-              <StatusBadge status="Invalid" />
+              <StatusBadge status="Invalid" type="attachment" />
               <span className="text-sm">Failed validation</span>
             </div>
           </div>

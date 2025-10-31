@@ -134,6 +134,7 @@ export type Database = {
         Row: {
           body: string
           created_at: string
+          from_email: string | null
           id: string
           last_sent_at: string | null
           send_status: Database["public"]["Enums"]["send_status"]
@@ -144,6 +145,7 @@ export type Database = {
         Insert: {
           body: string
           created_at?: string
+          from_email?: string | null
           id?: string
           last_sent_at?: string | null
           send_status?: Database["public"]["Enums"]["send_status"]
@@ -154,6 +156,7 @@ export type Database = {
         Update: {
           body?: string
           created_at?: string
+          from_email?: string | null
           id?: string
           last_sent_at?: string | null
           send_status?: Database["public"]["Enums"]["send_status"]
