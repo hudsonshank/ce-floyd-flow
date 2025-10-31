@@ -154,11 +154,12 @@ serve(async (req) => {
 
         // Sync commitments with vendor details
         for (const commitment of commitments) {
-          // Fetch vendor details
-          let vendorName = 'Unknown';
-          let vendorEmail = null;
+          // Use vendor name from commitment if available, otherwise try to fetch full vendor details
+          let vendorName = commitment.vendor?.name || 'Unknown';
+          let vendorEmail = commitment.vendor?.email_address || null;
           
-          if (commitment.vendor?.id) {
+          // Only fetch full vendor details if we have an ID but not a name
+          if (commitment.vendor?.id && vendorName === 'Unknown') {
             try {
               const vendorResponse = await fetch(
                 `https://api.procore.com/rest/v1.0/vendors/${commitment.vendor.id}?company_id=${companyId}`,
@@ -172,8 +173,8 @@ serve(async (req) => {
               
               if (vendorResponse.ok) {
                 const vendor = await vendorResponse.json();
-                vendorName = vendor.name || 'Unknown';
-                vendorEmail = vendor.email_address;
+                vendorName = vendor.name || vendorName;
+                vendorEmail = vendor.email_address || vendorEmail;
               }
             } catch (error) {
               console.error(`Failed to fetch vendor ${commitment.vendor.id}:`, error);
