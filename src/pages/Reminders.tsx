@@ -9,6 +9,7 @@ import { Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { StatusBadge } from "@/components/StatusBadge";
+import { z } from "zod";
 
 export default function Reminders() {
   const [fromEmail, setFromEmail] = useState("");
@@ -57,21 +58,43 @@ export default function Reminders() {
   };
 
   const handleSendReminder = async () => {
-    if (!toEmail || !subject || !body) {
-      toast.error("Please fill in all fields");
-      return;
-    }
+    // Validate inputs using zod schema
+    const reminderSchema = z.object({
+      to_email: z
+        .string()
+        .email("Invalid email address")
+        .max(255, "Email must be less than 255 characters"),
+      subject: z
+        .string()
+        .min(1, "Subject is required")
+        .max(200, "Subject must be less than 200 characters")
+        .refine((s) => !s.includes('\n') && !s.includes('\r'), {
+          message: "Subject cannot contain newline characters",
+        }),
+      body: z
+        .string()
+        .min(1, "Message is required")
+        .max(5000, "Message must be less than 5000 characters"),
+    });
 
-    setLoading(true);
     try {
+      // Validate all inputs
+      const validated = reminderSchema.parse({
+        to_email: toEmail,
+        subject: subject,
+        body: body,
+      });
+
+      setLoading(true);
+
       // Create reminder record (email sending will be implemented later)
       const { error } = await supabase
         .from("reminders")
         .insert({
           from_email: fromEmail,
-          to_email: toEmail,
-          subject,
-          body,
+          to_email: validated.to_email,
+          subject: validated.subject,
+          body: validated.body,
           send_status: "queued",
           subcontract_id: null, // Will be linked when sending from Tracker
         });
@@ -84,7 +107,13 @@ export default function Reminders() {
       setBody("");
       loadReminders();
     } catch (error: any) {
-      toast.error(error.message);
+      if (error instanceof z.ZodError) {
+        // Show the first validation error
+        const firstError = error.errors[0];
+        toast.error(firstError.message);
+      } else {
+        toast.error(error.message);
+      }
     } finally {
       setLoading(false);
     }

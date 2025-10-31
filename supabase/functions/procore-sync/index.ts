@@ -36,25 +36,25 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { data: profile, error: profileError } = await adminClient
-      .from('profiles')
+    const { data: tokenData, error: tokenError } = await adminClient
+      .from('oauth_tokens')
       .select('procore_access_token')
       .eq('user_id', user.id)
       .single();
 
-    console.log('Profile lookup for user:', user.id, 'Has token:', !!profile?.procore_access_token);
+    console.log('Token lookup for user:', user.id, 'Has token:', !!tokenData?.procore_access_token);
 
-    if (profileError) {
-      console.error('Profile error:', profileError);
-      throw new Error(`Failed to fetch profile: ${profileError.message}`);
+    if (tokenError) {
+      console.error('Token error:', tokenError);
+      throw new Error(`Failed to fetch OAuth tokens: ${tokenError.message}`);
     }
 
-    if (!profile?.procore_access_token) {
+    if (!tokenData?.procore_access_token) {
       throw new Error('Procore not connected. Please connect to Procore first.');
     }
 
     const companyId = Deno.env.get('PROCORE_COMPANY_ID');
-    const accessToken = profile.procore_access_token;
+    const accessToken = tokenData.procore_access_token;
 
     console.log('Starting Procore sync for company:', companyId);
 

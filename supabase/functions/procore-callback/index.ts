@@ -75,14 +75,17 @@ serve(async (req) => {
 
     // Using userId from state parameter - no auth header required
 
-    // Store token in profiles table
+    // Store/update tokens in oauth_tokens table
     const { error: updateError } = await supabaseClient
-      .from('profiles')
-      .update({ 
+      .from('oauth_tokens')
+      .upsert({
+        user_id: userId,
         procore_access_token: tokenData.access_token,
         procore_refresh_token: tokenData.refresh_token,
-      })
-      .eq('user_id', userId);
+        updated_at: new Date().toISOString(),
+      }, {
+        onConflict: 'user_id'
+      });
 
     if (updateError) {
       console.error('Failed to store token:', updateError);

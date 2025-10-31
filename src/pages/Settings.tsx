@@ -28,15 +28,20 @@ export default function Settings() {
   }, []);
 
   const checkProcoreConnection = async () => {
+    // Note: OAuth tokens are now stored securely and not accessible to client
+    // Connection status will be verified when attempting to sync
+    // For now, we'll check if there's been any successful sync
     try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('procore_access_token')
-        .single();
+      const { data: projects } = await supabase
+        .from('projects')
+        .select('id, last_sync_at')
+        .not('last_sync_at', 'is', null)
+        .limit(1);
       
-      setIsConnected(!!profile?.procore_access_token);
+      setIsConnected(projects && projects.length > 0);
     } catch (error) {
       console.error('Error checking Procore connection:', error);
+      setIsConnected(false);
     }
   };
 
