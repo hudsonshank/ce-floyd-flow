@@ -28,14 +28,26 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    // Get user profile with Procore token
-    const { data: profile, error: profileError } = await supabaseClient
+    // Get user profile with Procore token using service role to bypass RLS
+    const adminClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    const { data: profile, error: profileError } = await adminClient
       .from('profiles')
       .select('procore_access_token')
       .eq('user_id', user.id)
       .single();
 
-    if (profileError || !profile?.procore_access_token) {
+    console.log('Profile lookup for user:', user.id, 'Has token:', !!profile?.procore_access_token);
+
+    if (profileError) {
+      console.error('Profile error:', profileError);
+      throw new Error(`Failed to fetch profile: ${profileError.message}`);
+    }
+
+    if (!profile?.procore_access_token) {
       throw new Error('Procore not connected. Please connect to Procore first.');
     }
 
@@ -64,9 +76,9 @@ serve(async (req) => {
     const projects = await projectsResponse.json();
     console.log(`Fetched ${projects.length} projects from Procore`);
 
-    // Sync projects to database
+    // Sync projects to database using admin client
     for (const project of projects) {
-      const { error: upsertError } = await supabaseClient
+      const { error: upsertError } = await adminClient
         .from('projects')
         .upsert({
           procore_project_id: project.id.toString(),
@@ -108,7 +120,7 @@ serve(async (req) => {
         totalCommitments += commitments.length;
 
         // Get the internal project ID
-        const { data: dbProject } = await supabaseClient
+        const { data: dbProject } = await adminClient
           .from('projects')
           .select('id')
           .eq('procore_project_id', project.id.toString())
@@ -118,7 +130,7 @@ serve(async (req) => {
 
         // Sync commitments
         for (const commitment of commitments) {
-          const { error: upsertError } = await supabaseClient
+          const { error: upsertError } = await adminClient
             .from('subcontracts')
             .upsert({
               procore_commitment_id: commitment.id.toString(),
