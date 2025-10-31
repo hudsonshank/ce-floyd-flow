@@ -94,6 +94,18 @@ serve(async (req) => {
           status: project.active ? 'Active' : 'Inactive',
           pm_name: project.project_manager?.email,
           start_date: project.start_date,
+          address: project.address,
+          city: project.city,
+          state_code: project.state_code,
+          zip: project.zip,
+          county: project.county,
+          completion_date: project.completion_date,
+          projected_finish_date: project.projected_finish_date,
+          estimated_value: project.estimated_value,
+          total_value: project.total_value,
+          project_stage: project.project_stage?.name || project.stage,
+          latitude: project.latitude,
+          longitude: project.longitude,
           last_sync_at: new Date().toISOString(),
         }, {
           onConflict: 'procore_project_id',
@@ -140,18 +152,47 @@ serve(async (req) => {
 
         if (!dbProject) continue;
 
-        // Sync commitments
+        // Sync commitments with vendor details
         for (const commitment of commitments) {
+          // Fetch vendor details
+          let vendorName = 'Unknown';
+          let vendorEmail = null;
+          
+          if (commitment.vendor?.id) {
+            try {
+              const vendorResponse = await fetch(
+                `https://api.procore.com/rest/v1.0/vendors/${commitment.vendor.id}?company_id=${companyId}`,
+                {
+                  headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                  },
+                }
+              );
+              
+              if (vendorResponse.ok) {
+                const vendor = await vendorResponse.json();
+                vendorName = vendor.name || 'Unknown';
+                vendorEmail = vendor.email_address;
+              }
+            } catch (error) {
+              console.error(`Failed to fetch vendor ${commitment.vendor.id}:`, error);
+            }
+          }
+
           const { error: upsertError } = await adminClient
             .from('subcontracts')
             .upsert({
               procore_commitment_id: commitment.id.toString(),
               project_id: dbProject.id,
-              subcontractor_name: commitment.vendor?.name || 'Unknown',
-              subcontractor_email: commitment.vendor?.email,
+              subcontractor_name: vendorName,
+              subcontractor_email: vendorEmail,
+              title: commitment.title,
+              number: commitment.number,
               contract_value: commitment.grand_total,
               contract_date: commitment.executed_date,
-              status: commitment.status === 'approved' ? 'Approved' : 'Draft',
+              status: commitment.status === 'Approved' ? 'Approved' : 'Draft',
+              executed: commitment.executed || false,
               last_updated_at: new Date().toISOString(),
             }, {
               onConflict: 'procore_commitment_id',

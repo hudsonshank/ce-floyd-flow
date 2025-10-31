@@ -99,40 +99,76 @@ export type Database = {
       }
       projects: {
         Row: {
+          address: string | null
+          city: string | null
+          completion_date: string | null
+          county: string | null
           created_at: string
+          estimated_value: number | null
           id: string
           last_sync_at: string | null
+          latitude: number | null
+          longitude: number | null
           name: string
           number: string | null
           pm_name: string | null
           procore_project_id: string
+          project_stage: string | null
+          projected_finish_date: string | null
           start_date: string | null
+          state_code: string | null
           status: string | null
+          total_value: number | null
           updated_at: string
+          zip: string | null
         }
         Insert: {
+          address?: string | null
+          city?: string | null
+          completion_date?: string | null
+          county?: string | null
           created_at?: string
+          estimated_value?: number | null
           id?: string
           last_sync_at?: string | null
+          latitude?: number | null
+          longitude?: number | null
           name: string
           number?: string | null
           pm_name?: string | null
           procore_project_id: string
+          project_stage?: string | null
+          projected_finish_date?: string | null
           start_date?: string | null
+          state_code?: string | null
           status?: string | null
+          total_value?: number | null
           updated_at?: string
+          zip?: string | null
         }
         Update: {
+          address?: string | null
+          city?: string | null
+          completion_date?: string | null
+          county?: string | null
           created_at?: string
+          estimated_value?: number | null
           id?: string
           last_sync_at?: string | null
+          latitude?: number | null
+          longitude?: number | null
           name?: string
           number?: string | null
           pm_name?: string | null
           procore_project_id?: string
+          project_stage?: string | null
+          projected_finish_date?: string | null
           start_date?: string | null
+          state_code?: string | null
           status?: string | null
+          total_value?: number | null
           updated_at?: string
+          zip?: string | null
         }
         Relationships: []
       }
@@ -185,40 +221,49 @@ export type Database = {
           contract_date: string | null
           contract_value: number | null
           created_at: string
+          executed: boolean | null
           id: string
           last_updated_at: string
           missing_count: number
+          number: string | null
           procore_commitment_id: string
           project_id: string
           status: Database["public"]["Enums"]["subcontract_status"]
           subcontractor_email: string | null
           subcontractor_name: string
+          title: string | null
         }
         Insert: {
           contract_date?: string | null
           contract_value?: number | null
           created_at?: string
+          executed?: boolean | null
           id?: string
           last_updated_at?: string
           missing_count?: number
+          number?: string | null
           procore_commitment_id: string
           project_id: string
           status?: Database["public"]["Enums"]["subcontract_status"]
           subcontractor_email?: string | null
           subcontractor_name: string
+          title?: string | null
         }
         Update: {
           contract_date?: string | null
           contract_value?: number | null
           created_at?: string
+          executed?: boolean | null
           id?: string
           last_updated_at?: string
           missing_count?: number
+          number?: string | null
           procore_commitment_id?: string
           project_id?: string
           status?: Database["public"]["Enums"]["subcontract_status"]
           subcontractor_email?: string | null
           subcontractor_name?: string
+          title?: string | null
         }
         Relationships: [
           {
