@@ -1,5 +1,6 @@
 import { LayoutDashboard, FolderKanban, FileText, ClipboardCheck, Mail, Settings } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
+import ceFloydLogo from "@/assets/ce_floyd_logo.svg";
 import {
   Sidebar,
   SidebarContent,
@@ -30,9 +31,11 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarContent>
         <div className="px-3 py-4">
-          <h1 className={`font-bold text-sidebar-foreground transition-all ${isCollapsed ? "text-lg text-center" : "text-xl"}`}>
-            {isCollapsed ? "CP" : "CPTS"}
-          </h1>
+          <img 
+            src={ceFloydLogo} 
+            alt="CE Floyd Logo" 
+            className={`transition-all ${isCollapsed ? "w-8 mx-auto" : "w-32"}`}
+          />
         </div>
         
         <SidebarGroup>
