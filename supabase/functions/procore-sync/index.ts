@@ -38,7 +38,7 @@ serve(async (req) => {
 
     const { data: tokenData, error: tokenError } = await adminClient
       .from('oauth_tokens')
-      .select('procore_access_token')
+      .select('procore_access_token, procore_refresh_token')
       .eq('user_id', user.id)
       .single();
 
@@ -49,24 +49,72 @@ serve(async (req) => {
       throw new Error(`Failed to fetch OAuth tokens: ${tokenError.message}`);
     }
 
-    if (!tokenData?.procore_access_token) {
+    if (!tokenData?.procore_access_token || !tokenData?.procore_refresh_token) {
       throw new Error('Procore not connected. Please connect to Procore first.');
     }
 
     const companyId = Deno.env.get('PROCORE_COMPANY_ID');
-    const accessToken = tokenData.procore_access_token;
+    let accessToken = tokenData.procore_access_token;
+
+    // Helper function to refresh the access token
+    const refreshAccessToken = async (): Promise<string> => {
+      console.log('Refreshing Procore access token...');
+      const tokenResponse = await fetch('https://login.procore.com/oauth/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          grant_type: 'refresh_token',
+          client_id: Deno.env.get('PROCORE_CLIENT_ID'),
+          client_secret: Deno.env.get('PROCORE_CLIENT_SECRET'),
+          refresh_token: tokenData.procore_refresh_token,
+        }),
+      });
+
+      if (!tokenResponse.ok) {
+        const error = await tokenResponse.text();
+        console.error('Token refresh failed:', error);
+        throw new Error('Failed to refresh Procore token. Please reconnect to Procore.');
+      }
+
+      const tokens = await tokenResponse.json();
+      
+      // Update tokens in database
+      await adminClient
+        .from('oauth_tokens')
+        .update({
+          procore_access_token: tokens.access_token,
+          procore_refresh_token: tokens.refresh_token,
+        })
+        .eq('user_id', user.id);
+
+      console.log('Token refreshed successfully');
+      return tokens.access_token;
+    };
 
     console.log('Starting Procore sync for company:', companyId);
 
-    // Fetch projects from Procore
-    const projectsResponse = await fetch(
-      `https://api.procore.com/rest/v1.0/projects?company_id=${companyId}`,
-      {
+    // Helper function to make authenticated Procore API calls with automatic token refresh
+    const procoreFetch = async (url: string, retryCount = 0): Promise<Response> => {
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
+      });
+
+      // If unauthorized and we haven't retried yet, refresh token and retry
+      if (response.status === 401 && retryCount === 0) {
+        console.log('Access token expired, refreshing...');
+        accessToken = await refreshAccessToken();
+        return procoreFetch(url, retryCount + 1);
       }
+
+      return response;
+    };
+
+    // Fetch projects from Procore
+    const projectsResponse = await procoreFetch(
+      `https://api.procore.com/rest/v1.0/projects?company_id=${companyId}`
     );
 
     if (!projectsResponse.ok) {
@@ -120,14 +168,8 @@ serve(async (req) => {
     let totalCommitments = 0;
     for (const project of projects) {
       try {
-        const commitmentsResponse = await fetch(
-          `https://api.procore.com/rest/v1.0/commitments?project_id=${project.id}&company_id=${companyId}`,
-          {
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-              'Content-Type': 'application/json',
-            },
-          }
+        const commitmentsResponse = await procoreFetch(
+          `https://api.procore.com/rest/v1.0/commitments?project_id=${project.id}&company_id=${companyId}`
         );
 
         if (!commitmentsResponse.ok) {
@@ -161,14 +203,8 @@ serve(async (req) => {
           // Only fetch full vendor details if we have an ID but not a name
           if (commitment.vendor?.id && vendorName === 'Unknown') {
             try {
-              const vendorResponse = await fetch(
-                `https://api.procore.com/rest/v1.0/vendors/${commitment.vendor.id}?company_id=${companyId}`,
-                {
-                  headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json',
-                  },
-                }
+              const vendorResponse = await procoreFetch(
+                `https://api.procore.com/rest/v1.0/vendors/${commitment.vendor.id}?company_id=${companyId}`
               );
               
               if (vendorResponse.ok) {
