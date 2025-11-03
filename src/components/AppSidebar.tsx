@@ -30,11 +30,11 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
-        <div className="px-3 py-4">
+        <div className="px-3 py-4 flex justify-center">
           <img 
             src={ceFloydLogo} 
             alt="CE Floyd Logo" 
-            className={`transition-all ${isCollapsed ? "w-8 mx-auto" : "w-32"}`}
+            className={`transition-all ${isCollapsed ? "w-6" : "w-20"}`}
           />
         </div>
         
