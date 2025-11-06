@@ -198,39 +198,68 @@ serve(async (req) => {
         for (const commitment of commitments) {
           let vendorName = 'Unknown';
           let vendorEmail = null;
+          let vendorId = null;
           
           // Try to get vendor information from different sources
           if (commitment.vendor) {
+            vendorId = commitment.vendor.id;
             // First, try to use the embedded vendor data
             if (commitment.vendor.name) {
               vendorName = commitment.vendor.name;
               vendorEmail = commitment.vendor.email_address || null;
-            } 
-            // If no name but we have an ID, fetch full vendor details
-            else if (commitment.vendor.id) {
-              try {
-                console.log(`Fetching vendor details for ID: ${commitment.vendor.id}`);
-                const vendorResponse = await procoreFetch(
-                  `https://api.procore.com/rest/v1.0/vendors/${commitment.vendor.id}?company_id=${companyId}`
-                );
-                
-                if (vendorResponse.ok) {
-                  const vendor = await vendorResponse.json();
-                  vendorName = vendor.name || vendor.company || 'Unknown';
-                  vendorEmail = vendor.email_address || vendor.email || null;
-                  console.log(`Fetched vendor: ${vendorName}`);
-                } else {
-                  console.error(`Failed to fetch vendor ${commitment.vendor.id}: ${vendorResponse.status}`);
-                }
-              } catch (error) {
-                console.error(`Error fetching vendor ${commitment.vendor.id}:`, error);
-              }
             }
           }
           
-          // Also check if vendor info is in other fields
+          // If we still don't have vendor name, fetch commitment details
+          if (vendorName === 'Unknown') {
+            try {
+              console.log(`Commitment ${commitment.id} has no vendor name, fetching details...`);
+              const detailResponse = await procoreFetch(
+                `https://api.procore.com/rest/v1.0/commitments/${commitment.id}?project_id=${project.id}&company_id=${companyId}`
+              );
+              
+              if (detailResponse.ok) {
+                const detail = await detailResponse.json();
+                console.log(`Commitment ${commitment.id} detail vendor:`, JSON.stringify(detail.vendor));
+                
+                if (detail.vendor) {
+                  vendorId = detail.vendor.id || vendorId;
+                  vendorName = detail.vendor.name || detail.vendor.company || vendorName;
+                  vendorEmail = detail.vendor.email_address || detail.vendor.email || vendorEmail;
+                }
+              } else {
+                console.error(`Failed to fetch commitment detail ${commitment.id}: ${detailResponse.status}`);
+              }
+            } catch (error) {
+              console.error(`Error fetching commitment detail ${commitment.id}:`, error);
+            }
+          }
+          
+          // If still no name but we have vendor ID, fetch vendor directly
+          if (vendorName === 'Unknown' && vendorId) {
+            try {
+              console.log(`Fetching vendor by ID: ${vendorId}`);
+              const vendorResponse = await procoreFetch(
+                `https://api.procore.com/rest/v1.0/vendors/${vendorId}?company_id=${companyId}`
+              );
+              
+              if (vendorResponse.ok) {
+                const vendor = await vendorResponse.json();
+                vendorName = vendor.name || vendor.company || vendorName;
+                vendorEmail = vendor.email_address || vendor.email || vendorEmail;
+                console.log(`Fetched vendor: ${vendorName}`);
+              } else {
+                console.error(`Failed to fetch vendor ${vendorId}: ${vendorResponse.status}`);
+              }
+            } catch (error) {
+              console.error(`Error fetching vendor ${vendorId}:`, error);
+            }
+          }
+          
+          // Final fallback to other commitment fields
           if (vendorName === 'Unknown') {
             vendorName = commitment.vendor_name || commitment.subcontractor_name || 'Unknown';
+            console.log(`Commitment ${commitment.id} using fallback vendor name: ${vendorName}`);
           }
 
           // Try multiple possible field names for contract value

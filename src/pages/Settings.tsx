@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 export default function Settings() {
   const [isConnected, setIsConnected] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isBackfilling, setIsBackfilling] = useState(false);
 
   useEffect(() => {
     checkProcoreConnection();
@@ -81,6 +82,27 @@ export default function Settings() {
     }
   };
 
+  const handleVendorBackfill = async () => {
+    if (!isConnected) {
+      toast.error("Please connect to Procore first");
+      return;
+    }
+
+    setIsBackfilling(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('procore-vendor-backfill');
+      
+      if (error) throw error;
+      
+      toast.success(`Backfill completed! ${data.updated} vendors updated, ${data.failed} failed`);
+    } catch (error: any) {
+      console.error('Error running vendor backfill:', error);
+      toast.error(error.message || "Failed to run vendor backfill");
+    } finally {
+      setIsBackfilling(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -136,6 +158,19 @@ export default function Settings() {
               <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
               {isSyncing ? 'Syncing...' : 'Run Procore Sync Now'}
             </Button>
+
+            <Button 
+              onClick={handleVendorBackfill} 
+              variant="outline" 
+              className="w-full"
+              disabled={!isConnected || isBackfilling}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isBackfilling ? 'animate-spin' : ''}`} />
+              {isBackfilling ? 'Updating...' : 'Fix Unknown Vendors'}
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Updates subcontracts showing "Unknown" by fetching vendor details from Procore
+            </p>
           </div>
         </CardContent>
       </Card>

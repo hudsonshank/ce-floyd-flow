@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.procore-sync]
 verify_jwt = true
+
+[functions.procore-vendor-backfill]
+verify_jwt = true
