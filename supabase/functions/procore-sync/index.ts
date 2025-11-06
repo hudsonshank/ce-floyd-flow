@@ -199,6 +199,7 @@ serve(async (req) => {
           let vendorName = 'Unknown';
           let vendorEmail = null;
           let vendorId = null;
+          let contractValue = null;
           
           // Try to get vendor information from different sources
           if (commitment.vendor) {
@@ -210,6 +211,13 @@ serve(async (req) => {
             }
           }
           
+          // Try to extract contract value from commitment list data
+          contractValue = commitment.grand_total 
+            || commitment.revised_contract 
+            || commitment.contract_amount 
+            || commitment.commitment_contract_amount
+            || null;
+          
           // If we still don't have vendor name, fetch commitment details
           if (vendorName === 'Unknown') {
             try {
@@ -220,12 +228,29 @@ serve(async (req) => {
               
               if (detailResponse.ok) {
                 const detail = await detailResponse.json();
+                console.log(`Commitment ${commitment.id} detail:`, JSON.stringify(detail).substring(0, 800));
                 console.log(`Commitment ${commitment.id} detail vendor:`, JSON.stringify(detail.vendor));
                 
                 if (detail.vendor) {
                   vendorId = detail.vendor.id || vendorId;
                   vendorName = detail.vendor.name || detail.vendor.company || vendorName;
                   vendorEmail = detail.vendor.email_address || detail.vendor.email || vendorEmail;
+                }
+                
+                // Extract contract value from detail - try all possible fields
+                if (contractValue === null) {
+                  contractValue = detail.grand_total 
+                    || detail.revised_contract 
+                    || detail.contract_amount 
+                    || detail.total_draw_amount_remaining
+                    || detail.actual_amount
+                    || detail.approved_change_orders
+                    || detail.commitment_contract_amount
+                    || null;
+                  
+                  if (contractValue !== null) {
+                    console.log(`Found contract value ${contractValue} for commitment ${commitment.id}`);
+                  }
                 }
               } else {
                 console.error(`Failed to fetch commitment detail ${commitment.id}: ${detailResponse.status}`);
@@ -262,12 +287,6 @@ serve(async (req) => {
             console.log(`Commitment ${commitment.id} using fallback vendor name: ${vendorName}`);
           }
 
-          // Try multiple possible field names for contract value
-          const contractValue = commitment.grand_total 
-            || commitment.revised_contract 
-            || commitment.contract_amount 
-            || commitment.commitment_contract_amount
-            || null;
 
           // Map Procore status to our enum
           const mappedStatus = commitment.status === 'Approved'
