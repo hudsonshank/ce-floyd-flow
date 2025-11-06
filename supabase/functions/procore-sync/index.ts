@@ -112,6 +112,47 @@ serve(async (req) => {
       return response;
     };
 
+    // Normalize/match Procore statuses to our enum values
+    const mapProcoreStatus = (input?: string | null): string => {
+      const s = (input ?? '').toString().trim().toLowerCase();
+      switch (s) {
+        case 'executed':
+          // Our enum uses Approved instead of Executed
+          return 'Approved';
+        case 'processing':
+          return 'Processing';
+        case 'submitted':
+          return 'Submitted';
+        case 'out for signature':
+        case 'out_for_signature':
+        case 'out-for-signature':
+          return 'Out for Signature';
+        case 'out for bid':
+        case 'out_for_bid':
+        case 'out-for-bid':
+          return 'Out for Bid';
+        case 'approved':
+          return 'Approved';
+        case 'complete':
+          return 'Complete';
+        case 'terminated':
+          return 'Terminated';
+        case 'void':
+          return 'Void';
+        case 'closed':
+          return 'Closed';
+        case 'received':
+          return 'Received';
+        case 'partially received':
+          case 'partially_received':
+          case 'partially-received':
+          return 'Partially Received';
+        case 'draft':
+        default:
+          return 'Draft';
+      }
+    };
+
     // Fetch projects from Procore
     const projectsResponse = await procoreFetch(
       `https://api.procore.com/rest/v1.0/projects?company_id=${companyId}`
@@ -291,9 +332,8 @@ serve(async (req) => {
           // Log the status we received from Procore
           console.log(`Commitment ${commitment.id} status from Procore: "${commitment.status}"`);
 
-          // Use Procore status directly (now that we support all their statuses)
-          // Fallback to 'Draft' if status is null or undefined
-          const mappedStatus = commitment.status || 'Draft';
+          // Normalize Procore status to our enum (handles case and synonyms)
+          const mappedStatus = mapProcoreStatus(commitment.status);
 
           console.log(`Mapped status for commitment ${commitment.id}: "${mappedStatus}"`);
 
