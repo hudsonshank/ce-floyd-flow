@@ -88,6 +88,36 @@ export type Database = {
         }
         Relationships: []
       }
+      procore_sync_queue: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          retry_count: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          retry_count?: number
+          status?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          retry_count?: number
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -361,6 +391,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      process_procore_sync_queue: { Args: never; Returns: undefined }
+      queue_procore_sync_for_all_users: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "pm" | "admin" | "exec"
