@@ -196,25 +196,41 @@ serve(async (req) => {
 
         // Sync commitments with vendor details
         for (const commitment of commitments) {
-          // Use vendor name from commitment if available, otherwise try to fetch full vendor details
-          let vendorName = commitment.vendor?.name || 'Unknown';
-          let vendorEmail = commitment.vendor?.email_address || null;
+          let vendorName = 'Unknown';
+          let vendorEmail = null;
           
-          // Only fetch full vendor details if we have an ID but not a name
-          if (commitment.vendor?.id && vendorName === 'Unknown') {
-            try {
-              const vendorResponse = await procoreFetch(
-                `https://api.procore.com/rest/v1.0/vendors/${commitment.vendor.id}?company_id=${companyId}`
-              );
-              
-              if (vendorResponse.ok) {
-                const vendor = await vendorResponse.json();
-                vendorName = vendor.name || vendorName;
-                vendorEmail = vendor.email_address || vendorEmail;
+          // Try to get vendor information from different sources
+          if (commitment.vendor) {
+            // First, try to use the embedded vendor data
+            if (commitment.vendor.name) {
+              vendorName = commitment.vendor.name;
+              vendorEmail = commitment.vendor.email_address || null;
+            } 
+            // If no name but we have an ID, fetch full vendor details
+            else if (commitment.vendor.id) {
+              try {
+                console.log(`Fetching vendor details for ID: ${commitment.vendor.id}`);
+                const vendorResponse = await procoreFetch(
+                  `https://api.procore.com/rest/v1.0/vendors/${commitment.vendor.id}?company_id=${companyId}`
+                );
+                
+                if (vendorResponse.ok) {
+                  const vendor = await vendorResponse.json();
+                  vendorName = vendor.name || vendor.company || 'Unknown';
+                  vendorEmail = vendor.email_address || vendor.email || null;
+                  console.log(`Fetched vendor: ${vendorName}`);
+                } else {
+                  console.error(`Failed to fetch vendor ${commitment.vendor.id}: ${vendorResponse.status}`);
+                }
+              } catch (error) {
+                console.error(`Error fetching vendor ${commitment.vendor.id}:`, error);
               }
-            } catch (error) {
-              console.error(`Failed to fetch vendor ${commitment.vendor.id}:`, error);
             }
+          }
+          
+          // Also check if vendor info is in other fields
+          if (vendorName === 'Unknown') {
+            vendorName = commitment.vendor_name || commitment.subcontractor_name || 'Unknown';
           }
 
           // Try multiple possible field names for contract value
