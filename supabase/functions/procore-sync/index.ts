@@ -269,6 +269,11 @@ serve(async (req) => {
             || commitment.commitment_contract_amount
             || null;
 
+          // Map Procore status to our enum
+          const mappedStatus = commitment.status === 'Approved'
+            ? 'Executed'
+            : (commitment.status === 'Out for Signature' ? 'Out for Signature' : 'Draft');
+
           const { error: upsertError } = await adminClient
             .from('subcontracts')
             .upsert({
@@ -280,7 +285,7 @@ serve(async (req) => {
               number: commitment.number,
               contract_value: contractValue,
               contract_date: commitment.executed_date,
-              status: commitment.status === 'Approved' ? 'Approved' : 'Draft',
+              status: mappedStatus,
               executed: commitment.executed || false,
               last_updated_at: new Date().toISOString(),
             }, {

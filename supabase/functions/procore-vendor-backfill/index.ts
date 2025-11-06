@@ -126,8 +126,18 @@ serve(async (req) => {
     for (const subcontract of (unknownSubcontracts || [])) {
       try {
         const project = Array.isArray(subcontract.projects) ? subcontract.projects[0] : subcontract.projects;
-        const projectId = project?.procore_project_id;
+        let projectId = project?.procore_project_id as string | null;
         const commitmentId = subcontract.procore_commitment_id;
+        
+        if (!projectId) {
+          // Fallback: fetch project by foreign key
+          const { data: projRow } = await adminClient
+            .from('projects')
+            .select('procore_project_id')
+            .eq('id', subcontract.project_id)
+            .maybeSingle();
+          projectId = projRow?.procore_project_id ?? null;
+        }
         
         if (!projectId) {
           console.error(`No project ID found for subcontract ${subcontract.id}`);
