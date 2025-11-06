@@ -88,14 +88,14 @@ export default function Tracker() {
   }, 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Document Tracker</h1>
-          <p className="text-muted-foreground">Excel-style tracking grid for F/G/H/COI/W-9 completion</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Document Tracker</h1>
+          <p className="text-muted-foreground mt-1">Excel-style tracking grid for F/G/H/COI/W-9 completion</p>
         </div>
         <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
-          <SelectTrigger className="w-[320px]">
+          <SelectTrigger className="w-[320px] border-border/50">
             <SelectValue placeholder="Select a project" />
           </SelectTrigger>
           <SelectContent>
@@ -106,15 +106,15 @@ export default function Tracker() {
         </Select>
       </div>
 
-      <Card>
-        <CardHeader className="pb-3">
+      <Card className="border-border/50">
+        <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>{selectedProject?.name || 'Select a Project'}</CardTitle>
-              <CardDescription className="text-sm mt-1">
+              <CardTitle className="text-xl">{selectedProject?.name || 'Select a Project'}</CardTitle>
+              <CardDescription className="text-sm mt-1.5">
                 {subcontracts.length} {subcontracts.length === 1 ? 'subcontract' : 'subcontracts'}
                 {totalContractValue > 0 && (
-                  <span className="ml-2 font-semibold">
+                  <span className="ml-2 font-semibold text-foreground">
                     • Total Value: ${totalContractValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 )}
@@ -126,18 +126,18 @@ export default function Tracker() {
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead className="font-semibold">Subcontractor</TableHead>
-                  <TableHead className="font-semibold">Title</TableHead>
-                  <TableHead className="text-right font-semibold">Contract Value</TableHead>
-                  <TableHead className="text-center font-semibold">Contract Status</TableHead>
-                  <TableHead className="text-center font-semibold border-l-2 border-border">Att. F</TableHead>
-                  <TableHead className="text-center font-semibold">Att. G</TableHead>
-                  <TableHead className="text-center font-semibold">Att. H</TableHead>
-                  <TableHead className="text-center font-semibold">COI</TableHead>
-                  <TableHead className="text-center font-semibold">W-9</TableHead>
-                  <TableHead className="font-semibold">Last Updated</TableHead>
-                  <TableHead className="text-right font-semibold">Actions</TableHead>
+                <TableRow className="bg-muted/30 border-b">
+                  <TableHead className="font-medium text-xs">Subcontractor</TableHead>
+                  <TableHead className="font-medium text-xs">Title</TableHead>
+                  <TableHead className="text-right font-medium text-xs">Contract Value</TableHead>
+                  <TableHead className="text-center font-medium text-xs">Contract Status</TableHead>
+                  <TableHead className="text-center font-medium text-xs border-l border-border/50">Att. F</TableHead>
+                  <TableHead className="text-center font-medium text-xs">Att. G</TableHead>
+                  <TableHead className="text-center font-medium text-xs">Att. H</TableHead>
+                  <TableHead className="text-center font-medium text-xs">COI</TableHead>
+                  <TableHead className="text-center font-medium text-xs">W-9</TableHead>
+                  <TableHead className="font-medium text-xs">Last Updated</TableHead>
+                  <TableHead className="text-right font-medium text-xs">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -152,18 +152,18 @@ export default function Tracker() {
                   </TableRow>
                 ) : (
                   subcontracts.map((sub) => (
-                    <TableRow key={sub.id} className="hover:bg-muted/50">
-                      <TableCell className="font-medium">{sub.subcontractor_name}</TableCell>
+                    <TableRow key={sub.id} className="hover:bg-muted/20 border-b border-border/50">
+                      <TableCell className="font-medium text-sm">{sub.subcontractor_name}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {sub.title || '-'}
                       </TableCell>
-                      <TableCell className="text-right font-mono">
+                      <TableCell className="text-right font-mono text-sm">
                         {sub.contract_value ? `$${sub.contract_value.toLocaleString()}` : '-'}
                       </TableCell>
                       <TableCell className="text-center">
                         <StatusBadge status={sub.status} type="subcontract" showIcon={false} />
                       </TableCell>
-                      <TableCell className="text-center border-l-2 border-border">
+                      <TableCell className="text-center border-l border-border/50">
                         <StatusBadge status={getAttachmentStatus(sub.id, 'F')} type="attachment" showIcon={false} />
                       </TableCell>
                       <TableCell className="text-center">
@@ -178,7 +178,7 @@ export default function Tracker() {
                       <TableCell className="text-center">
                         <StatusBadge status={getAttachmentStatus(sub.id, 'W-9')} type="attachment" showIcon={false} />
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
+                      <TableCell className="text-xs text-muted-foreground">
                         {new Date(sub.last_updated_at).toLocaleDateString('en-US', {
                           month: 'short',
                           day: 'numeric',
@@ -186,7 +186,7 @@ export default function Tracker() {
                         })}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" title="Upload documents">
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Upload documents">
                           <Upload className="h-4 w-4" />
                         </Button>
                       </TableCell>
@@ -200,43 +200,43 @@ export default function Tracker() {
       </Card>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Card>
+        <Card className="border-border/50">
           <CardHeader>
-            <CardTitle className="text-base">Attachment Status Legend</CardTitle>
+            <CardTitle className="text-lg">Attachment Status Legend</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid gap-3">
-              <div className="flex items-center gap-2">
+          <CardContent className="pt-6">
+            <div className="grid gap-4">
+              <div className="flex items-center gap-3">
                 <StatusBadge status="Complete" type="attachment" showIcon={false} />
-                <span className="text-sm">Document received and verified</span>
+                <span className="text-sm text-muted-foreground">Document received and verified</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <StatusBadge status="Pending Review" type="attachment" showIcon={false} />
-                <span className="text-sm">Uploaded, awaiting validation</span>
+                <span className="text-sm text-muted-foreground">Uploaded, awaiting validation</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <StatusBadge status="Invalid" type="attachment" showIcon={false} />
-                <span className="text-sm">Failed validation, needs correction</span>
+                <span className="text-sm text-muted-foreground">Failed validation, needs correction</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <StatusBadge status="Missing" type="attachment" showIcon={false} />
-                <span className="text-sm">Not yet received</span>
+                <span className="text-sm text-muted-foreground">Not yet received</span>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-border/50">
           <CardHeader>
-            <CardTitle className="text-base">Required Documents</CardTitle>
+            <CardTitle className="text-lg">Required Documents</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid gap-2 text-sm">
-              <div><strong>Attachment F:</strong> Prevailing Wage Compliance</div>
-              <div><strong>Attachment G:</strong> List of Subcontractors/Suppliers</div>
-              <div><strong>Attachment H:</strong> Non-Collusion Affidavit</div>
-              <div><strong>COI:</strong> Certificate of Insurance</div>
-              <div><strong>W-9:</strong> Tax Information Form</div>
+          <CardContent className="pt-6">
+            <div className="grid gap-3 text-sm">
+              <div><strong className="font-medium">Attachment F:</strong> <span className="text-muted-foreground">Prevailing Wage Compliance</span></div>
+              <div><strong className="font-medium">Attachment G:</strong> <span className="text-muted-foreground">List of Subcontractors/Suppliers</span></div>
+              <div><strong className="font-medium">Attachment H:</strong> <span className="text-muted-foreground">Non-Collusion Affidavit</span></div>
+              <div><strong className="font-medium">COI:</strong> <span className="text-muted-foreground">Certificate of Insurance</span></div>
+              <div><strong className="font-medium">W-9:</strong> <span className="text-muted-foreground">Tax Information Form</span></div>
             </div>
           </CardContent>
         </Card>

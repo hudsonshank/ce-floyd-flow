@@ -78,39 +78,41 @@ export default function Portfolio() {
   const hasProjects = activeProjects > 0 || totalContracts > 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Portfolio Dashboard</h1>
-        <p className="text-muted-foreground">Company-wide contract tracking overview</p>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">Portfolio Dashboard</h1>
+        <p className="text-muted-foreground mt-1">Company-wide contract tracking overview</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {tiles.map((tile) => (
-          <Card key={tile.title} className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{tile.title}</CardTitle>
-              <tile.icon className={`h-4 w-4 ${tile.color}`} />
+          <Card key={tile.title} className="transition-all hover:shadow-md border-border/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">{tile.title}</CardTitle>
+              <div className={`p-2 rounded-md bg-muted/50`}>
+                <tile.icon className={`h-4 w-4 ${tile.color}`} />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{tile.value}</div>
-              <p className="text-xs text-muted-foreground">{tile.description}</p>
+              <div className="text-3xl font-bold tracking-tight">{tile.value}</div>
+              <p className="text-xs text-muted-foreground mt-1">{tile.description}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <Card>
+      <Card className="border-border/50">
         <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
+          <CardTitle className="text-xl">Recent Activity</CardTitle>
           <CardDescription>Latest updates across all projects</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           {hasProjects ? (
-            <div className="text-muted-foreground">Data synced. Explore Projects and Subcontracts pages for details.</div>
+            <div className="text-sm text-muted-foreground">Data synced. Explore Projects and Subcontracts pages for details.</div>
           ) : (
-            <div className="text-center py-12 text-muted-foreground">
-              <p>No projects synced yet</p>
-              <p className="text-sm mt-2">Connect to Procore in Settings to begin tracking</p>
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">No projects synced yet</p>
+              <p className="text-sm text-muted-foreground/70 mt-2">Connect to Procore in Settings to begin tracking</p>
             </div>
           )}
         </CardContent>
