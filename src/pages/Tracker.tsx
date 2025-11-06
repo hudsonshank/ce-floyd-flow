@@ -18,7 +18,7 @@ interface Subcontract {
   contract_value: number | null;
   status: string;
   last_updated_at: string;
-  missing_count: number;
+  title: string | null;
 }
 
 interface Attachment {
@@ -54,7 +54,7 @@ export default function Tracker() {
     const loadSubcontracts = async () => {
       const { data: subsData } = await supabase
         .from('subcontracts')
-        .select('id, subcontractor_name, contract_value, status, last_updated_at, missing_count')
+        .select('id, subcontractor_name, contract_value, status, last_updated_at, title')
         .eq('project_id', selectedProjectId)
         .order('subcontractor_name', { ascending: true });
       
@@ -128,6 +128,7 @@ export default function Tracker() {
               <TableHeader>
                 <TableRow className="bg-muted/50">
                   <TableHead className="font-semibold">Subcontractor</TableHead>
+                  <TableHead className="font-semibold">Title</TableHead>
                   <TableHead className="text-right font-semibold">Contract Value</TableHead>
                   <TableHead className="text-center font-semibold">Contract Status</TableHead>
                   <TableHead className="text-center font-semibold border-l-2 border-border">Att. F</TableHead>
@@ -135,7 +136,6 @@ export default function Tracker() {
                   <TableHead className="text-center font-semibold">Att. H</TableHead>
                   <TableHead className="text-center font-semibold">COI</TableHead>
                   <TableHead className="text-center font-semibold">W-9</TableHead>
-                  <TableHead className="text-center font-semibold">Missing Docs</TableHead>
                   <TableHead className="font-semibold">Last Updated</TableHead>
                   <TableHead className="text-right font-semibold">Actions</TableHead>
                 </TableRow>
@@ -154,6 +154,9 @@ export default function Tracker() {
                   subcontracts.map((sub) => (
                     <TableRow key={sub.id} className="hover:bg-muted/50">
                       <TableCell className="font-medium">{sub.subcontractor_name}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {sub.title || '-'}
+                      </TableCell>
                       <TableCell className="text-right font-mono">
                         {sub.contract_value ? `$${sub.contract_value.toLocaleString()}` : '-'}
                       </TableCell>
@@ -174,15 +177,6 @@ export default function Tracker() {
                       </TableCell>
                       <TableCell className="text-center">
                         <StatusBadge status={getAttachmentStatus(sub.id, 'W-9')} type="attachment" showIcon={false} />
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {sub.missing_count > 0 ? (
-                          <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-destructive text-destructive-foreground font-semibold text-sm">
-                            {sub.missing_count}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {new Date(sub.last_updated_at).toLocaleDateString('en-US', {
