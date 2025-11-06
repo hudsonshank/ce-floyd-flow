@@ -82,87 +82,117 @@ export default function Tracker() {
 
   const selectedProject = projects.find(p => p.id === selectedProjectId);
 
+  // Calculate total contract value for the selected project
+  const totalContractValue = subcontracts.reduce((sum, sub) => {
+    return sum + (sub.contract_value || 0);
+  }, 0);
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Document Tracker</h1>
-        <p className="text-muted-foreground">Track F/G/H/COI/W-9 completion by subcontract</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Document Tracker</h1>
+          <p className="text-muted-foreground">Excel-style tracking grid for F/G/H/COI/W-9 completion</p>
+        </div>
+        <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
+          <SelectTrigger className="w-[320px]">
+            <SelectValue placeholder="Select a project" />
+          </SelectTrigger>
+          <SelectContent>
+            {projects.map(p => (
+              <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <CardTitle>Project: {selectedProject?.name || 'Select a Project'}</CardTitle>
-              <CardDescription>Excel-style tracking grid for document completion</CardDescription>
+            <div>
+              <CardTitle>{selectedProject?.name || 'Select a Project'}</CardTitle>
+              <CardDescription className="text-sm mt-1">
+                {subcontracts.length} {subcontracts.length === 1 ? 'subcontract' : 'subcontracts'}
+                {totalContractValue > 0 && (
+                  <span className="ml-2 font-semibold">
+                    • Total Value: ${totalContractValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                )}
+              </CardDescription>
             </div>
-            <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
-              <SelectTrigger className="w-[280px]">
-                <SelectValue placeholder="Select a project" />
-              </SelectTrigger>
-              <SelectContent>
-                {projects.map(p => (
-                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Subcontractor</TableHead>
-                  <TableHead className="text-right">Contract $</TableHead>
-                  <TableHead className="text-center">F</TableHead>
-                  <TableHead className="text-center">G</TableHead>
-                  <TableHead className="text-center">H</TableHead>
-                  <TableHead className="text-center">COI</TableHead>
-                  <TableHead className="text-center">W-9</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Last Update</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                <TableRow className="bg-muted/50">
+                  <TableHead className="font-semibold">Subcontractor</TableHead>
+                  <TableHead className="text-right font-semibold">Contract Value</TableHead>
+                  <TableHead className="text-center font-semibold">Contract Status</TableHead>
+                  <TableHead className="text-center font-semibold border-l-2 border-border">Att. F</TableHead>
+                  <TableHead className="text-center font-semibold">Att. G</TableHead>
+                  <TableHead className="text-center font-semibold">Att. H</TableHead>
+                  <TableHead className="text-center font-semibold">COI</TableHead>
+                  <TableHead className="text-center font-semibold">W-9</TableHead>
+                  <TableHead className="text-center font-semibold">Missing Docs</TableHead>
+                  <TableHead className="font-semibold">Last Updated</TableHead>
+                  <TableHead className="text-right font-semibold">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {subcontracts.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center py-12">
+                    <TableCell colSpan={11} className="text-center py-12">
                       <div className="text-muted-foreground">
-                        <p>No subcontracts to track</p>
-                        <p className="text-sm mt-2">Select a project or sync from Procore</p>
+                        <p className="text-lg font-medium">No subcontracts found</p>
+                        <p className="text-sm mt-2">Select a different project or sync from Procore to load subcontracts</p>
                       </div>
                     </TableCell>
                   </TableRow>
                 ) : (
                   subcontracts.map((sub) => (
-                    <TableRow key={sub.id}>
+                    <TableRow key={sub.id} className="hover:bg-muted/50">
                       <TableCell className="font-medium">{sub.subcontractor_name}</TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right font-mono">
                         {sub.contract_value ? `$${sub.contract_value.toLocaleString()}` : '-'}
                       </TableCell>
                       <TableCell className="text-center">
-                        <StatusBadge status={getAttachmentStatus(sub.id, 'F')} type="attachment" />
+                        <StatusBadge status={sub.status} type="subcontract" showIcon={false} />
+                      </TableCell>
+                      <TableCell className="text-center border-l-2 border-border">
+                        <StatusBadge status={getAttachmentStatus(sub.id, 'F')} type="attachment" showIcon={false} />
                       </TableCell>
                       <TableCell className="text-center">
-                        <StatusBadge status={getAttachmentStatus(sub.id, 'G')} type="attachment" />
+                        <StatusBadge status={getAttachmentStatus(sub.id, 'G')} type="attachment" showIcon={false} />
                       </TableCell>
                       <TableCell className="text-center">
-                        <StatusBadge status={getAttachmentStatus(sub.id, 'H')} type="attachment" />
+                        <StatusBadge status={getAttachmentStatus(sub.id, 'H')} type="attachment" showIcon={false} />
                       </TableCell>
                       <TableCell className="text-center">
-                        <StatusBadge status={getAttachmentStatus(sub.id, 'COI')} type="attachment" />
+                        <StatusBadge status={getAttachmentStatus(sub.id, 'COI')} type="attachment" showIcon={false} />
                       </TableCell>
                       <TableCell className="text-center">
-                        <StatusBadge status={getAttachmentStatus(sub.id, 'W-9')} type="attachment" />
+                        <StatusBadge status={getAttachmentStatus(sub.id, 'W-9')} type="attachment" showIcon={false} />
                       </TableCell>
-                      <TableCell>
-                        <StatusBadge status={sub.status} type="subcontract" />
+                      <TableCell className="text-center">
+                        {sub.missing_count > 0 ? (
+                          <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-destructive text-destructive-foreground font-semibold text-sm">
+                            {sub.missing_count}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
                       </TableCell>
-                      <TableCell>{new Date(sub.last_updated_at).toLocaleDateString()}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {new Date(sub.last_updated_at).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
+                      </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" title="Upload documents">
                           <Upload className="h-4 w-4" />
                         </Button>
                       </TableCell>
@@ -175,31 +205,48 @@ export default function Tracker() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Document Types Legend</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-4">
-            <div className="flex items-center gap-2">
-              <StatusBadge status="Complete" type="attachment" />
-              <span className="text-sm">Document received & verified</span>
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Attachment Status Legend</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3">
+              <div className="flex items-center gap-2">
+                <StatusBadge status="Complete" type="attachment" showIcon={false} />
+                <span className="text-sm">Document received and verified</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <StatusBadge status="Pending Review" type="attachment" showIcon={false} />
+                <span className="text-sm">Uploaded, awaiting validation</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <StatusBadge status="Invalid" type="attachment" showIcon={false} />
+                <span className="text-sm">Failed validation, needs correction</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <StatusBadge status="Missing" type="attachment" showIcon={false} />
+                <span className="text-sm">Not yet received</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <StatusBadge status="Pending Review" type="attachment" />
-              <span className="text-sm">Needs validation</span>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Required Documents</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-2 text-sm">
+              <div><strong>Attachment F:</strong> Prevailing Wage Compliance</div>
+              <div><strong>Attachment G:</strong> List of Subcontractors/Suppliers</div>
+              <div><strong>Attachment H:</strong> Non-Collusion Affidavit</div>
+              <div><strong>COI:</strong> Certificate of Insurance</div>
+              <div><strong>W-9:</strong> Tax Information Form</div>
             </div>
-            <div className="flex items-center gap-2">
-              <StatusBadge status="Missing" type="attachment" />
-              <span className="text-sm">Not yet received</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <StatusBadge status="Invalid" type="attachment" />
-              <span className="text-sm">Failed validation</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

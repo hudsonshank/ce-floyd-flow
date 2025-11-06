@@ -288,10 +288,14 @@ serve(async (req) => {
           }
 
 
-          // Map Procore status to our enum
-          const mappedStatus = commitment.status === 'Approved'
-            ? 'Executed'
-            : (commitment.status === 'Out for Signature' ? 'Out for Signature' : 'Draft');
+          // Log the status we received from Procore
+          console.log(`Commitment ${commitment.id} status from Procore: "${commitment.status}"`);
+
+          // Use Procore status directly (now that we support all their statuses)
+          // Fallback to 'Draft' if status is null or undefined
+          const mappedStatus = commitment.status || 'Draft';
+
+          console.log(`Mapped status for commitment ${commitment.id}: "${mappedStatus}"`);
 
           const { error: upsertError } = await adminClient
             .from('subcontracts')

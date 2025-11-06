@@ -1,6 +1,4 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,7 +15,6 @@ interface Project {
 
 export default function Projects() {
   const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(false);
 
   const fetchProjects = async () => {
     const { data, error } = await supabase
@@ -35,31 +32,11 @@ export default function Projects() {
     fetchProjects();
   }, []);
 
-  const handleSync = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('procore-sync');
-      if (error) throw error;
-      toast.success(`Sync completed! ${data.projectsCount} projects, ${data.commitmentsCount} commitments`);
-      await fetchProjects();
-    } catch (e: any) {
-      toast.error(e.message || 'Sync failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Projects</h1>
-          <p className="text-muted-foreground">All construction projects</p>
-        </div>
-        <Button onClick={handleSync} disabled={loading}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          {loading ? 'Syncing...' : 'Sync from Procore'}
-        </Button>
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Projects</h1>
+        <p className="text-muted-foreground">All construction projects synced from Procore</p>
       </div>
 
       <Card>

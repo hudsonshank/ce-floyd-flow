@@ -18,21 +18,37 @@ import { useEffect, useState } from "react";
 export function AppHeader() {
   const navigate = useNavigate();
   const [lastSync, setLastSync] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+
+  const fetchLastSync = async () => {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('last_sync_at')
+      .order('last_sync_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!error && data?.last_sync_at) {
+      setLastSync(new Date(data.last_sync_at).toLocaleString());
+    }
+  };
 
   useEffect(() => {
-    const fetchLastSync = async () => {
-      const { data, error } = await supabase
-        .from('projects')
-        .select('last_sync_at')
-        .order('last_sync_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (!error && data?.last_sync_at) {
-        setLastSync(new Date(data.last_sync_at).toLocaleString());
-      }
-    };
     fetchLastSync();
   }, []);
+
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('procore-sync');
+      if (error) throw error;
+      toast.success(`Sync completed! ${data.projectsCount} projects, ${data.commitmentsCount} commitments`);
+      await fetchLastSync();
+    } catch (e: any) {
+      toast.error(e.message || 'Sync failed');
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
@@ -62,7 +78,18 @@ export function AppHeader() {
             <RefreshCw className="h-4 w-4" />
             <span className="hidden sm:inline">Last Sync: {lastSync ?? 'Never'}</span>
           </div>
-          
+
+          <Button
+            onClick={handleSync}
+            disabled={syncing}
+            variant="default"
+            size="sm"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">{syncing ? 'Syncing...' : 'Sync from Procore'}</span>
+            <span className="sm:hidden">Sync</span>
+          </Button>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
