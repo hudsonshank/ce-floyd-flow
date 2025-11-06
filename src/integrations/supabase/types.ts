@@ -368,7 +368,19 @@ export type Database = {
       attachment_type: "F" | "G" | "H" | "COI" | "W9" | "Other"
       send_status: "queued" | "sent" | "bounced" | "failed"
       severity_level: "info" | "warn" | "error"
-      subcontract_status: "Draft" | "Out for Signature" | "Executed"
+      subcontract_status:
+        | "Draft"
+        | "Out for Bid"
+        | "Out for Signature"
+        | "Approved"
+        | "Complete"
+        | "Terminated"
+        | "Void"
+        | "Processing"
+        | "Submitted"
+        | "Partially Received"
+        | "Received"
+        | "Closed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -501,7 +513,20 @@ export const Constants = {
       attachment_type: ["F", "G", "H", "COI", "W9", "Other"],
       send_status: ["queued", "sent", "bounced", "failed"],
       severity_level: ["info", "warn", "error"],
-      subcontract_status: ["Draft", "Out for Signature", "Executed"],
+      subcontract_status: [
+        "Draft",
+        "Out for Bid",
+        "Out for Signature",
+        "Approved",
+        "Complete",
+        "Terminated",
+        "Void",
+        "Processing",
+        "Submitted",
+        "Partially Received",
+        "Received",
+        "Closed",
+      ],
     },
   },
 } as const
