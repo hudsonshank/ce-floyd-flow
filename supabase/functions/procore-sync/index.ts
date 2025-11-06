@@ -212,8 +212,8 @@ serve(async (req) => {
           }
           
           // Try to extract contract value from commitment list data
-          contractValue = commitment.grand_total 
-            || commitment.revised_contract 
+          contractValue = commitment.revised_contract
+            || commitment.grand_total 
             || commitment.contract_amount 
             || commitment.commitment_contract_amount
             || null;
@@ -239,8 +239,8 @@ serve(async (req) => {
                 
                 // Extract contract value from detail - try all possible fields
                 if (contractValue === null) {
-                  contractValue = detail.grand_total 
-                    || detail.revised_contract 
+                  contractValue = detail.revised_contract 
+                    || detail.grand_total 
                     || detail.contract_amount 
                     || detail.total_draw_amount_remaining
                     || detail.actual_amount
@@ -249,7 +249,7 @@ serve(async (req) => {
                     || null;
                   
                   if (contractValue !== null) {
-                    console.log(`Found contract value ${contractValue} for commitment ${commitment.id}`);
+                    console.log(`Found contract value ${contractValue} for commitment ${commitment.id} (revised_contract: ${detail.revised_contract}, grand_total: ${detail.grand_total})`);
                   }
                 }
               } else {
