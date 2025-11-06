@@ -337,7 +337,7 @@ serve(async (req) => {
 
           console.log(`Mapped status for commitment ${commitment.id}: "${mappedStatus}"`);
 
-          const { error: upsertError } = await adminClient
+          const { data: upsertedSub, error: upsertError } = await adminClient
             .from('subcontracts')
             .upsert({
               procore_commitment_id: commitment.id.toString(),
@@ -353,10 +353,43 @@ serve(async (req) => {
               last_updated_at: new Date().toISOString(),
             }, {
               onConflict: 'procore_commitment_id',
-            });
+            })
+            .select()
+            .single();
 
           if (upsertError) {
             console.error('Failed to upsert commitment:', commitment.id, upsertError);
+            continue;
+          }
+
+          // Create default attachment records if they don't exist
+          if (upsertedSub) {
+            const requiredAttachmentTypes = ['F', 'G', 'H', 'COI', 'W9'];
+
+            for (const attachmentType of requiredAttachmentTypes) {
+              // Check if attachment already exists
+              const { data: existingAttachment } = await adminClient
+                .from('attachments')
+                .select('id')
+                .eq('subcontract_id', upsertedSub.id)
+                .eq('type', attachmentType)
+                .maybeSingle();
+
+              // Create attachment with Missing status if it doesn't exist
+              if (!existingAttachment) {
+                const { error: attachmentError } = await adminClient
+                  .from('attachments')
+                  .insert({
+                    subcontract_id: upsertedSub.id,
+                    type: attachmentType,
+                    status: 'Missing',
+                  });
+
+                if (attachmentError) {
+                  console.error(`Failed to create attachment ${attachmentType} for subcontract ${upsertedSub.id}:`, attachmentError);
+                }
+              }
+            }
           }
         }
       } catch (error) {
